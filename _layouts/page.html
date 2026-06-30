@@ -28,6 +28,21 @@ layout: default
     </div>
 
     <div class="docs-container" id="docsContainer">
+      <!-- Looper gjennom alle innlegg i _posts mappen -->
+      {% for post in site.posts %}
+        <!-- Gjør taggen om til små bokstaver og fjerner mellomrom for sikker matching -->
+        {% assign tag_slug = post.tags | first | slugify | remove: "-" %}
+        
+        <article class="filterable" data-tags="{{ tag_slug }}">
+          <div class="tag-container">
+            <span class="tag tag-{{ tag_slug }}">{{ post.tags | first }}</span>
+          </div>
+          <h2>{{ post.title }}</h2>
+          {{ post.content }}
+        </article>
+      {% endfor %}
+      
+      <!-- Viser innholdet fra selve index.md om du skulle skrive noe der -->
       {{ content }}
     </div>
 
@@ -35,4 +50,3 @@ layout: default
 </div>
 
 <script src="{{ '/assets/js/filter.js' | relative_url }}"></script>
-
