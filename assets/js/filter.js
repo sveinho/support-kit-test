@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const searchInput = document.getElementById('searchInput');
   const resetBtn = document.getElementById('resetSearchBtn');
   const tagButtons = document.querySelectorAll('.tag-btn');
-  const allTagsButton = document.querySelector('.tag-btn[data-value="all"]');
   const articles = document.querySelectorAll('.filterable');
   
   let currentTag = 'all';
@@ -10,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function filterArticles() {
     articles.forEach(article => {
-      // Splitter tagger om en post skulle ha flere enn én tag
       const tags = article.getAttribute('data-tags').split(' ');
       const title = article.querySelector('h2').textContent.toLowerCase();
       const content = article.querySelector('p').textContent.toLowerCase();
@@ -37,18 +35,12 @@ document.addEventListener('DOMContentLoaded', function() {
     filterArticles();
   });
 
-  // Nullstill-knapp (Resetter nå også aktiv tag til "all")
+  // Nullstill-knapp
   resetBtn.addEventListener('click', function() {
     searchInput.value = '';
     searchQuery = '';
     resetBtn.classList.add('invisible');
-    
-    // Klikker automatisk på "All paths"-knappen
-    if (allTagsButton) {
-      allTagsButton.click();
-    } else {
-      filterArticles();
-    }
+    filterArticles();
   });
 
   // Tag-knapper
