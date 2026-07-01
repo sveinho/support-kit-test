@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const title = article.querySelector('h2').textContent.toLowerCase();
       const content = article.querySelector('p').textContent.toLowerCase();
       
-      const matchesTag = (currentTag === 'gettingstarted' || tags.includes(currentTag));
+      const matchesTag = (currentTag === 'all' || tags.includes(currentTag));
       const matchesSearch = (title.includes(searchQuery) || content.includes(searchQuery));
 
       if (matchesTag && matchesSearch) {
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
     button.addEventListener('click', function() {
       tagButtons.forEach(btn => btn.classList.remove('active'));
       this.classList.add('active');
-      currentTag = this.getAttribute('gettingstarted');
+      currentTag = this.getAttribute('data-value');
       filterArticles();
     });
   });
