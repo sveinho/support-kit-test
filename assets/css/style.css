@@ -63,6 +63,13 @@ body {
   color: #fff;
 }
 
+mark {
+  background-color: #ffeb3b; /* Gul bakgrunnsfarge */
+  color: #000;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
 .page-layout {
   display: block;
   width: 100%;
