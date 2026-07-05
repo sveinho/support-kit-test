@@ -4,12 +4,14 @@ document.addEventListener('DOMContentLoaded', function() {
   const tagButtons = document.querySelectorAll('.tag-btn');
   const articles = document.querySelectorAll('.filterable');
   
-  // 1. Sett 'beginner' som standardverdi ved oppstart
+  // Setter standardverdi (alltid små bokstaver internt)
   let currentTag = 'beginner';
   let searchQuery = '';
 
-  // Sørg for at den riktige knappen har 'active'-klassen i HTML ved oppstart
-  const defaultButton = document.querySelector('.tag-btn[data-value="beginner"]');
+  // Finn knappen uavhengig av om det står "Beginner" eller "beginner" i HTML
+  const defaultButton = Array.from(tagButtons).find(btn => 
+    btn.getAttribute('data-value')?.toLowerCase() === currentTag
+  );
   if (defaultButton) {
     defaultButton.classList.add('active');
   }
@@ -17,13 +19,14 @@ document.addEventListener('DOMContentLoaded', function() {
   function filterArticles() {
     articles.forEach(article => {
       const tagsData = article.getAttribute('data-tags') || '';
-      const tags = tagsData.split(' ').filter(Boolean);
+      // Gjør om alle tagger fra HTML til små bokstaver for trygg sammenligning
+      const tags = tagsData.toLowerCase().split(' ').filter(Boolean);
       
       const title = article.querySelector('h2')?.textContent.toLowerCase() || '';
       const content = article.querySelector('p')?.textContent.toLowerCase() || '';
       
-      // Siden currentTag aldri blir helt tom nå, sjekker vi alltid om taggen finnes
-      const matchesTag = tags.includes(currentTag);
+      // Sammenligner i små bokstaver
+      const matchesTag = tags.includes(currentTag.toLowerCase());
       const matchesSearch = (title.includes(searchQuery) || content.includes(searchQuery));
 
       if (matchesTag && matchesSearch) {
@@ -34,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Kjør filteret én gang ved oppstart for å skjule alt som ikke er 'getting-started'
+  // Kjør filteret ved oppstart
   filterArticles();
 
   // Søkefelt-event
@@ -62,14 +65,10 @@ document.addEventListener('DOMContentLoaded', function() {
     button.addEventListener('click', function() {
       const clickedTag = this.getAttribute('data-value');
       
-      // 2. Hvis man klikker av en aktiv knapp, faller vi tilbake til 'getting-started'
-      if (currentTag === clickedTag) {
+      if (currentTag.toLowerCase() === clickedTag?.toLowerCase()) {
         this.classList.remove('active');
         currentTag = 'beginner';
-        
-        // Aktiver 'getting-started'-knappen igjen visuelt
-        const startBtn = document.querySelector('.tag-btn[data-value="beginner"]');
-        if (startBtn) startBtn.classList.add('active');
+        if (defaultButton) defaultButton.classList.add('active');
       } else {
         tagButtons.forEach(btn => btn.classList.remove('active'));
         this.classList.add('active');
