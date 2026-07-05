@@ -7,58 +7,57 @@ document.addEventListener('DOMContentLoaded', function() {
   const searchCounter = document.getElementById('searchCounter');
   const noResults = document.getElementById('noResults');
   
-  let currentTag = 'beginner';
+  // 1. ENDRING: Sett 'all' som standardverdi ved oppstart
+  let currentTag = 'all';
   let searchQuery = '';
   const MAX_SUMMARY_LENGTH = 100;
 
-  // 1. FORBEDRING: Lagre 100 % ren tekst fri for HTML-tagger og skjulte tegn
+  // Lagre original HTML og ren tekst ved oppstart
   articles.forEach(article => {
     const titleEl = article.querySelector('h2');
     const contentEl = article.querySelector('p');
     
     if (titleEl) {
       article.dataset.origTitle = titleEl.innerHTML;
-      // .textContent fjerner alle <strong>, <a> osv, og gir ren tekst
       article.dataset.pureTitle = titleEl.textContent.trim().toLowerCase();
     }
     if (contentEl) {
       article.dataset.origContent = contentEl.innerHTML;
-      // Renser bort HTML-tagger og erstatter usynlige orddelingstegn (&shy;)
       article.dataset.pureText = contentEl.textContent.replace(/\u00AD/g, '').trim().toLowerCase();
     }
 
-    // Klikk på artikkel
+    // Klikk på artikkel (nullstiller søk og hopper inn i artikkelens spesifikke tag)
     article.addEventListener('click', function() {
       const tagsData = this.getAttribute('data-tags') || '';
       const tags = tagsData.toLowerCase().split(' ').filter(Boolean);
-      const newTag = tags.find(tag => tag !== 'beginner');
       
-      if (newTag) {
-        currentTag = newTag;
-        searchInput.value = '';
-        searchQuery = '';
-        resetBtn.classList.add('invisible');
-        
-        tagButtons.forEach(btn => {
-          if (btn.getAttribute('data-value')?.toLowerCase() === newTag) {
-            btn.classList.add('active');
-          } else {
-            btn.classList.remove('active');
-          }
-        });
-        
-        filterArticles();
-        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      // Finn en tag som IKKE er 'all'. Hvis den kun har 'all', blir den i 'all'.
+      const newTag = tags.find(tag => tag !== 'all') || 'all';
+      
+      currentTag = newTag;
+      searchInput.value = '';
+      searchQuery = '';
+      resetBtn.classList.add('invisible');
+      
+      tagButtons.forEach(btn => {
+        if (btn.getAttribute('data-value')?.toLowerCase() === newTag) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      
+      filterArticles();
+      this.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   });
 
+  // Sett 'all'-knappen som aktiv i grensesnittet ved oppstart
   const defaultButton = Array.from(tagButtons).find(btn => 
     btn.getAttribute('data-value')?.toLowerCase() === currentTag
   );
   if (defaultButton) defaultButton.classList.add('active');
 
-  // 2. FORBEDRING: Gjør søkeordene trygge for RegEx (escaper ?, +, ., etc.)
   function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
@@ -68,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let html = originalHTML;
     words.forEach(word => {
       const safeWord = escapeRegExp(word);
-      // Finner ordet uten å ødelegge eksisterende HTML-tagger
       const regex = new RegExp(`(${safeWord})(?![^<]*>|[^<>]*</)`, 'gi');
       html = html.replace(regex, '<mark>$1</mark>');
     });
@@ -87,29 +85,20 @@ document.addEventListener('DOMContentLoaded', function() {
       const titleEl = article.querySelector('h2');
       const contentEl = article.querySelector('p');
       
-      // 3. FORBEDRING: Søk KUN i de ferdigvaskede tekstindeksene (ingen HTML-støy)
       const titleText = article.dataset.pureTitle || '';
       const contentText = article.dataset.pureText || '';
       const fullText = `${titleText} ${contentText}`; 
       
-      let matchesTag = false;
-      let matchesSearch = false;
-
-      if (isSearching) {
-        const isOnlyBeginner = tags.length === 1 && tags.includes('beginner');
-        matchesTag = !isOnlyBeginner; 
-        matchesSearch = searchWords.every(word => fullText.includes(word));
-      } else {
-        matchesTag = tags.includes(currentTag.toLowerCase());
-        matchesSearch = true; 
-      }
+      // 2. ENDRING: SØKELOGIKK. Hvis currentTag er 'all', matcher alle artikler tag-sjekken.
+      // Hvis ikke, må artikkelen ha den spesifikke taggen.
+      const matchesTag = (currentTag.toLowerCase() === 'all' || tags.includes(currentTag.toLowerCase()));
+      const matchesSearch = searchWords.every(word => fullText.includes(word));
 
       if (matchesTag && matchesSearch) {
         article.classList.remove('hidden');
         visibleCount++;
         
         if (isSearching && contentEl && article.dataset.pureText) {
-          // Finn opprinnelig ren tekst for forkorting
           let shortText = article.querySelector('p').textContent; 
           if (shortText.length > MAX_SUMMARY_LENGTH) {
             shortText = shortText.substring(0, MAX_SUMMARY_LENGTH) + '...';
@@ -132,11 +121,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function updateSearchUI(count, isSearching) {
     if (searchCounter) {
+      const activeBtn = Array.from(tagButtons).find(btn => btn.classList.contains('active'));
+      const tagNameVisible = activeBtn ? activeBtn.textContent : currentTag;
+
       if (isSearching) {
-        searchCounter.textContent = `Fant ${count} treff i avanserte kategorier`;
+        searchCounter.textContent = `Fant ${count} treff i "${tagNameVisible}"`;
       } else {
-        const activeBtn = Array.from(tagButtons).find(btn => btn.classList.contains('active'));
-        searchCounter.textContent = `Viser ${count} artikler i "${activeBtn ? activeBtn.textContent : currentTag}"`;
+        searchCounter.textContent = `Viser ${count} artikler i "${tagNameVisible}"`;
       }
     }
 
@@ -151,17 +142,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   filterArticles();
 
+  // Søkefelt-event (Beholder nå den aktive taggen uansett om det er 'all' eller en spesifikk kategori)
   searchInput.addEventListener('input', function(e) {
     searchQuery = e.target.value.toLowerCase().trim();
     if (searchQuery.length > 0) {
       resetBtn.classList.remove('invisible');
-      tagButtons.forEach(btn => btn.classList.remove('active'));
     } else {
       resetBtn.classList.add('invisible');
-      const activeBtn = Array.from(tagButtons).find(btn => 
-        btn.getAttribute('data-value')?.toLowerCase() === currentTag.toLowerCase()
-      );
-      if (activeBtn) activeBtn.classList.add('active');
     }
     filterArticles();
   });
@@ -170,25 +157,26 @@ document.addEventListener('DOMContentLoaded', function() {
     searchInput.value = '';
     searchQuery = '';
     resetBtn.classList.add('invisible');
-    const activeBtn = Array.from(tagButtons).find(btn => 
-      btn.getAttribute('data-value')?.toLowerCase() === currentTag.toLowerCase()
-    );
-    if (activeBtn) activeBtn.classList.add('active');
     searchInput.focus();
     filterArticles();
   });
 
+  // Tag-knapper
   tagButtons.forEach(button => {
     button.addEventListener('click', function() {
+      // Tømmer søket når man manuelt trykker på en ny kategori for renere UX
       searchInput.value = '';
       searchQuery = '';
       resetBtn.classList.add('invisible');
+
       const clickedTag = this.getAttribute('data-value');
       
+      // Hvis man klikker av en aktiv tag, faller vi tilbake til 'all'
       if (currentTag.toLowerCase() === clickedTag?.toLowerCase()) {
         this.classList.remove('active');
-        currentTag = 'beginner';
-        if (defaultButton) defaultButton.classList.add('active');
+        currentTag = 'all';
+        const allBtn = Array.from(tagButtons).find(btn => btn.getAttribute('data-value')?.toLowerCase() === 'all');
+        if (allBtn) allBtn.classList.add('active');
       } else {
         tagButtons.forEach(btn => btn.classList.remove('active'));
         this.classList.add('active');
