@@ -65,10 +65,10 @@ document.addEventListener('DOMContentLoaded', function() {
       // 2. Hvis man klikker av en aktiv knapp, faller vi tilbake til 'getting-started'
       if (currentTag === clickedTag) {
         this.classList.remove('active');
-        currentTag = 'getting-started';
+        currentTag = 'beginner';
         
         // Aktiver 'getting-started'-knappen igjen visuelt
-        const startBtn = document.querySelector('.tag-btn[data-value="getting-started"]');
+        const startBtn = document.querySelector('.tag-btn[data-value="beginner"]');
         if (startBtn) startBtn.classList.add('active');
       } else {
         tagButtons.forEach(btn => btn.classList.remove('active'));
