@@ -4,12 +4,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const tagButtons = document.querySelectorAll('.tag-btn');
   const articles = document.querySelectorAll('.filterable');
   
-  // 1. Sett 'getting-started' som standardverdi ved oppstart
-  let currentTag = 'getting-started';
+  // 1. Sett 'beginner' som standardverdi ved oppstart
+  let currentTag = 'beginner';
   let searchQuery = '';
 
   // Sørg for at den riktige knappen har 'active'-klassen i HTML ved oppstart
-  const defaultButton = document.querySelector('.tag-btn[data-value="getting-started"]');
+  const defaultButton = document.querySelector('.tag-btn[data-value="beginner"]');
   if (defaultButton) {
     defaultButton.classList.add('active');
   }
