@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const tagButtons = document.querySelectorAll('.tag-btn');
   const articles = document.querySelectorAll('.filterable');
   
-  let currentTag = 'gettingstarted';
+  let currentTag = '';
   let searchQuery = '';
 
   function filterArticles() {
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const title = article.querySelector('h2').textContent.toLowerCase();
       const content = article.querySelector('p').textContent.toLowerCase();
       
-      const matchesTag = (currentTag === 'all' || tags.includes(currentTag));
+      const matchesTag = (currentTag === '' || tags.includes(currentTag));
       const matchesSearch = (title.includes(searchQuery) || content.includes(searchQuery));
 
       if (matchesTag && matchesSearch) {
