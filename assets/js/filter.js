@@ -9,32 +9,32 @@ document.addEventListener('DOMContentLoaded', function() {
   
   let currentTag = 'beginner';
   let searchQuery = '';
-  const MAX_SUMMARY_LENGTH = 100; // Antall tegn som vises i søkeresultatet
+  const MAX_SUMMARY_LENGTH = 100;
 
-  // Lagre original HTML og ren tekst ved oppstart
+  // 1. FORBEDRING: Lagre 100 % ren tekst fri for HTML-tagger og skjulte tegn
   articles.forEach(article => {
     const titleEl = article.querySelector('h2');
     const contentEl = article.querySelector('p');
     
-    if (titleEl) article.dataset.origTitle = titleEl.innerHTML;
+    if (titleEl) {
+      article.dataset.origTitle = titleEl.innerHTML;
+      // .textContent fjerner alle <strong>, <a> osv, og gir ren tekst
+      article.dataset.pureTitle = titleEl.textContent.trim().toLowerCase();
+    }
     if (contentEl) {
       article.dataset.origContent = contentEl.innerHTML;
-      // Lagrer ren tekst uten HTML-tagger for trygg tekstforkorting
-      article.dataset.pureText = contentEl.textContent.trim();
+      // Renser bort HTML-tagger og erstatter usynlige orddelingstegn (&shy;)
+      article.dataset.pureText = contentEl.textContent.replace(/\u00AD/g, '').trim().toLowerCase();
     }
 
-    // HÅNDTER KLIKK PÅ ARTIKKEL
+    // Klikk på artikkel
     article.addEventListener('click', function() {
       const tagsData = this.getAttribute('data-tags') || '';
       const tags = tagsData.toLowerCase().split(' ').filter(Boolean);
-      
-      // Finn den første taggen som IKKE er 'beginner'
       const newTag = tags.find(tag => tag !== 'beginner');
       
       if (newTag) {
         currentTag = newTag;
-        
-        // Tøm søket og nullstill visuell tilstand
         searchInput.value = '';
         searchQuery = '';
         resetBtn.classList.add('invisible');
@@ -47,27 +47,29 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         });
         
-        // Kjører filteret på nytt (dette vil nå vise denne artikkelen + andre i samme kategori i FULL lengde)
         filterArticles();
-        
-        // Valgfritt: Rull skjermen silkemykt opp til den valgte artikkelen
         this.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     });
   });
 
-  // Sett standardknapp ved oppstart
   const defaultButton = Array.from(tagButtons).find(btn => 
     btn.getAttribute('data-value')?.toLowerCase() === currentTag
   );
   if (defaultButton) defaultButton.classList.add('active');
 
-  // Hjelpefunksjon for utheving (Highlighting)
+  // 2. FORBEDRING: Gjør søkeordene trygge for RegEx (escaper ?, +, ., etc.)
+  function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   function getHighlightedHTML(originalHTML, words) {
     if (words.length === 0 || !originalHTML) return originalHTML;
     let html = originalHTML;
     words.forEach(word => {
-      const regex = new RegExp(`(${word})(?![^<]*>|[^<>]*</)`, 'gi');
+      const safeWord = escapeRegExp(word);
+      // Finner ordet uten å ødelegge eksisterende HTML-tagger
+      const regex = new RegExp(`(${safeWord})(?![^<]*>|[^<>]*</)`, 'gi');
       html = html.replace(regex, '<mark>$1</mark>');
     });
     return html;
@@ -85,20 +87,19 @@ document.addEventListener('DOMContentLoaded', function() {
       const titleEl = article.querySelector('h2');
       const contentEl = article.querySelector('p');
       
-      const titleText = titleEl?.textContent.toLowerCase() || '';
-      const contentText = article.dataset.pureText?.toLowerCase() || '';
+      // 3. FORBEDRING: Søk KUN i de ferdigvaskede tekstindeksene (ingen HTML-støy)
+      const titleText = article.dataset.pureTitle || '';
+      const contentText = article.dataset.pureText || '';
       const fullText = `${titleText} ${contentText}`; 
       
       let matchesTag = false;
       let matchesSearch = false;
 
       if (isSearching) {
-        // SØKEMODUS: Vis alt på tvers av de tre andre kategoriene (ekskluder ren beginner)
         const isOnlyBeginner = tags.length === 1 && tags.includes('beginner');
         matchesTag = !isOnlyBeginner; 
         matchesSearch = searchWords.every(word => fullText.includes(word));
       } else {
-        // VANLIG MODUS: Filtrer kun på den valgte aktive taggen
         matchesTag = tags.includes(currentTag.toLowerCase());
         matchesSearch = true; 
       }
@@ -108,16 +109,14 @@ document.addEventListener('DOMContentLoaded', function() {
         visibleCount++;
         
         if (isSearching && contentEl && article.dataset.pureText) {
-          // 1. Forkort teksten hvis vi søker
-          let shortText = article.dataset.pureText;
+          // Finn opprinnelig ren tekst for forkorting
+          let shortText = article.querySelector('p').textContent; 
           if (shortText.length > MAX_SUMMARY_LENGTH) {
             shortText = shortText.substring(0, MAX_SUMMARY_LENGTH) + '...';
           }
-          // 2. Legg på highlighting på den forkortede teksten
           if (titleEl) titleEl.innerHTML = getHighlightedHTML(article.dataset.origTitle, searchWords);
           contentEl.innerHTML = getHighlightedHTML(shortText, searchWords);
         } else {
-          // TILBAKESTILL TIL FULL LENGDE (Når vi ikke søker lenger)
           if (titleEl) titleEl.innerHTML = article.dataset.origTitle || '';
           if (contentEl) contentEl.innerHTML = article.dataset.origContent || '';
         }
@@ -150,13 +149,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Kjør filter ved oppstart
   filterArticles();
 
-  // Søkefelt-event
   searchInput.addEventListener('input', function(e) {
     searchQuery = e.target.value.toLowerCase().trim();
-    
     if (searchQuery.length > 0) {
       resetBtn.classList.remove('invisible');
       tagButtons.forEach(btn => btn.classList.remove('active'));
@@ -170,28 +166,23 @@ document.addEventListener('DOMContentLoaded', function() {
     filterArticles();
   });
 
-  // Nullstill-knapp
   resetBtn.addEventListener('click', function() {
     searchInput.value = '';
     searchQuery = '';
     resetBtn.classList.add('invisible');
-    
     const activeBtn = Array.from(tagButtons).find(btn => 
       btn.getAttribute('data-value')?.toLowerCase() === currentTag.toLowerCase()
     );
     if (activeBtn) activeBtn.classList.add('active');
-    
     searchInput.focus();
     filterArticles();
   });
 
-  // Tag-knapper
   tagButtons.forEach(button => {
     button.addEventListener('click', function() {
       searchInput.value = '';
       searchQuery = '';
       resetBtn.classList.add('invisible');
-
       const clickedTag = this.getAttribute('data-value');
       
       if (currentTag.toLowerCase() === clickedTag?.toLowerCase()) {
@@ -203,7 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
         this.classList.add('active');
         currentTag = clickedTag;
       }
-      
       filterArticles();
     });
   });
