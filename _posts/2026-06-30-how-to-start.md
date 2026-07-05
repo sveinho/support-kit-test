@@ -1,7 +1,7 @@
 ---
 layout: null
 title: Choose one of the learning paths to get started
-tags: [getting-started]
+tags: [starting]
 ---
 
 <img width="100%" height="auto" alt="image" src="https://github.com/user-attachments/assets/45df492d-2e98-4b7e-96a4-f23727e9e95b" />
