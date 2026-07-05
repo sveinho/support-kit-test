@@ -4,11 +4,13 @@ document.addEventListener('DOMContentLoaded', function() {
   const tagButtons = document.querySelectorAll('.tag-btn');
   const articles = document.querySelectorAll('.filterable');
   
-  // Setter standardverdi (alltid små bokstaver internt)
+  // Nye HTML-elementer for søkevisning
+  const searchCounter = document.getElementById('searchCounter');
+  const noResults = document.getElementById('noResults');
+  
   let currentTag = 'beginner';
   let searchQuery = '';
 
-  // Finn knappen uavhengig av om det står "Beginner" eller "beginner" i HTML
   const defaultButton = Array.from(tagButtons).find(btn => 
     btn.getAttribute('data-value')?.toLowerCase() === currentTag
   );
@@ -17,24 +19,57 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function filterArticles() {
+    let visibleCount = 0; // Holder styr på hvor mange artikler som vises
+
+    // Del opp søket i enkeltord og fjern tomme mellomrom
+    const searchWords = searchQuery.split(' ').filter(Boolean);
+
     articles.forEach(article => {
       const tagsData = article.getAttribute('data-tags') || '';
-      // Gjør om alle tagger fra HTML til små bokstaver for trygg sammenligning
       const tags = tagsData.toLowerCase().split(' ').filter(Boolean);
       
       const title = article.querySelector('h2')?.textContent.toLowerCase() || '';
       const content = article.querySelector('p')?.textContent.toLowerCase() || '';
+      // Slår sammen tittel og tekst for å søke i alt samtidig
+      const fullText = `${title} ${content}`; 
       
-      // Sammenligner i små bokstaver
+      // Sjekk tag
       const matchesTag = tags.includes(currentTag.toLowerCase());
-      const matchesSearch = (title.includes(searchQuery) || content.includes(searchQuery));
+      
+      // Sjekk søk: Hvert enkelt ord brukeren skrev må finnes i teksten
+      const matchesSearch = searchWords.every(word => fullText.includes(word));
 
       if (matchesTag && matchesSearch) {
         article.classList.remove('hidden');
+        visibleCount++; // Øk telleren for hvert treff
       } else {
         article.classList.add('hidden');
       }
     });
+
+    // Håndter visning av resultater til brukeren
+    updateSearchUI(visibleCount);
+  }
+
+  // Funksjon som styrer hva brukeren ser av meldinger og tellere
+  function updateSearchUI(count) {
+    // 1. Oppdater telleren
+    if (searchCounter) {
+      if (searchQuery === '') {
+        searchCounter.textContent = `Viser ${count} artikler i denne kategorien`;
+      } else {
+        searchCounter.textContent = `Fant ${count} ${count === 1 ? 'treff' : 'treff'}`;
+      }
+    }
+
+    // 2. Vis/skjul "Ingen treff"-meldingen
+    if (noResults) {
+      if (count === 0) {
+        noResults.classList.remove('hidden');
+      } else {
+        noResults.classList.add('hidden');
+      }
+    }
   }
 
   // Kjør filteret ved oppstart
