@@ -9,9 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function filterArticles() {
     articles.forEach(article => {
-      const tags = article.getAttribute('data-tags').split(' ');
-      const title = article.querySelector('h2').textContent.toLowerCase();
-      const content = article.querySelector('p').textContent.toLowerCase();
+      // .filter(Boolean) fjerner tomme strenger fra arrayet hvis det er doble mellomrom
+      const tagsData = article.getAttribute('data-tags') || '';
+      const tags = tagsData.split(' ').filter(Boolean);
+      
+      // Valgfri kjeding (?.) hindrer krasj hvis h2 eller p mangler
+      const title = article.querySelector('h2')?.textContent.toLowerCase() || '';
+      const content = article.querySelector('p')?.textContent.toLowerCase() || '';
       
       const matchesTag = (currentTag === '' || tags.includes(currentTag));
       const matchesSearch = (title.includes(searchQuery) || content.includes(searchQuery));
@@ -36,23 +40,29 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Nullstill-knapp
-  // Nullstill-knapp
   resetBtn.addEventListener('click', function() {
-    searchInput.value = ''; // Tømmer tekstfeltet i HTML
-    searchQuery = '';       // Tømmer søkevariabelen i JS
-    resetBtn.classList.add('invisible'); // Skjuler reset-knappen
-    
-    searchInput.focus();    // Setter markøren tilbake i feltet (valgfritt, men god UX)
-    filterArticles();       // Kjører filteret på nytt (beholder aktiv currentTag)
+    searchInput.value = '';
+    searchQuery = '';
+    resetBtn.classList.add('invisible');
+    searchInput.focus();
+    filterArticles();
   });
-
 
   // Tag-knapper
   tagButtons.forEach(button => {
     button.addEventListener('click', function() {
-      tagButtons.forEach(btn => btn.classList.remove('active'));
-      this.classList.add('active');
-      currentTag = this.getAttribute('data-value');
+      const clickedTag = this.getAttribute('data-value');
+      
+      // Hvis man klikker på en allerede aktiv tag, deaktiveres den
+      if (currentTag === clickedTag) {
+        this.classList.remove('active');
+        currentTag = '';
+      } else {
+        tagButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        currentTag = clickedTag;
+      }
+      
       filterArticles();
     });
   });
