@@ -63,7 +63,6 @@ body {
   color: #fff;
 }
 
-/* Viser brukeren at hele kortet kan klikkes på */
 .filterable {
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -72,8 +71,7 @@ body {
   background-color: #f9f9f9; /* Svak bakgrunnsfarge ved hover */
 }
 
-/* Stil for uthevede søkeord */
-mark {
+.mark {
   background-color: #ffeb3b;
   color: #000;
   padding: 0 2px;
