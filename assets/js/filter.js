@@ -4,20 +4,26 @@ document.addEventListener('DOMContentLoaded', function() {
   const tagButtons = document.querySelectorAll('.tag-btn');
   const articles = document.querySelectorAll('.filterable');
   
-  let currentTag = '';
+  // 1. Sett 'getting-started' som standardverdi ved oppstart
+  let currentTag = 'getting-started';
   let searchQuery = '';
+
+  // Sørg for at den riktige knappen har 'active'-klassen i HTML ved oppstart
+  const defaultButton = document.querySelector('.tag-btn[data-value="getting-started"]');
+  if (defaultButton) {
+    defaultButton.classList.add('active');
+  }
 
   function filterArticles() {
     articles.forEach(article => {
-      // .filter(Boolean) fjerner tomme strenger fra arrayet hvis det er doble mellomrom
       const tagsData = article.getAttribute('data-tags') || '';
       const tags = tagsData.split(' ').filter(Boolean);
       
-      // Valgfri kjeding (?.) hindrer krasj hvis h2 eller p mangler
       const title = article.querySelector('h2')?.textContent.toLowerCase() || '';
       const content = article.querySelector('p')?.textContent.toLowerCase() || '';
       
-      const matchesTag = (currentTag === '' || tags.includes(currentTag));
+      // Siden currentTag aldri blir helt tom nå, sjekker vi alltid om taggen finnes
+      const matchesTag = tags.includes(currentTag);
       const matchesSearch = (title.includes(searchQuery) || content.includes(searchQuery));
 
       if (matchesTag && matchesSearch) {
@@ -27,6 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // Kjør filteret én gang ved oppstart for å skjule alt som ikke er 'getting-started'
+  filterArticles();
 
   // Søkefelt-event
   searchInput.addEventListener('input', function(e) {
@@ -53,10 +62,14 @@ document.addEventListener('DOMContentLoaded', function() {
     button.addEventListener('click', function() {
       const clickedTag = this.getAttribute('data-value');
       
-      // Hvis man klikker på en allerede aktiv tag, deaktiveres den
+      // 2. Hvis man klikker av en aktiv knapp, faller vi tilbake til 'getting-started'
       if (currentTag === clickedTag) {
         this.classList.remove('active');
-        currentTag = '';
+        currentTag = 'getting-started';
+        
+        // Aktiver 'getting-started'-knappen igjen visuelt
+        const startBtn = document.querySelector('.tag-btn[data-value="getting-started"]');
+        if (startBtn) startBtn.classList.add('active');
       } else {
         tagButtons.forEach(btn => btn.classList.remove('active'));
         this.classList.add('active');
